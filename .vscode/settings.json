@@ -1,0 +1,11 @@
+{
+    "go.autocompleteUnimportedPackages": true,
+    "go.gocodeAutoBuild": true,
+    "go.gotoSymbol.includeImports": true,
+    "go.useCodeSnippetsOnFunctionSuggest": true,
+    "go.useLanguageServer": true,
+    "go.useCodeSnippetsOnFunctionSuggestWithoutType": true,
+    "[go]":  {
+        "editor.formatOnSave": false
+    }
+}
