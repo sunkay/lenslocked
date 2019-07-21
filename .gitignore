@@ -1,5 +1,6 @@
 # anything under the tmp folder
 **/tmp/*
 **/exp/*
+**/.vscode/*
 
 lenslocked.com
