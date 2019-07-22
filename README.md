@@ -1,4 +1,4 @@
-Clone, get dependencies and running the application
+Clone, go get dependencies and running the application
 
 go get -u github.com/gorilla/mux
 go get -u github.com/gorilla/schema
