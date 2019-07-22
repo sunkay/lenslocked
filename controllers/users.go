@@ -26,8 +26,8 @@ func (u *Users) New(w http.ResponseWriter, r *http.Request) {
 }
 
 type SignupForm struct {
-	email    string `schema:"email"`
-	password string `schema:"password"`
+	Email    string `schema:"email"`
+	Password string `schema:"password"`
 }
 
 func (u *Users) Create(w http.ResponseWriter, r *http.Request) {
