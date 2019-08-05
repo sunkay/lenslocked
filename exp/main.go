@@ -1,60 +1,43 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
-	"os"
-	"strings"
 
-	"github.com/jinzhu/gorm"
-	_ "github.com/lib/pq"
+	"lenslocked.com/models"
 )
 
 const (
-	host     = "localhost"
-	port     = 5432
-	user     = "postgres"
-	password = "your-password"
-	dbname   = "lenslocked_dev"
+	host   = "localhost"
+	port   = 5432
+	user   = "postgres"
+	dbname = "lenslocked_dev"
 )
 
-type User struct {
-	gorm.Model
-	Name  string
-	Email string `gorm:"not null;unique_index"`
-}
-
 func main() {
-	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
-		"password=%s dbname=%s sslmode=disable",
-		host, port, user, password, dbname)
-	db, err := gorm.Open("postgres", psqlInfo)
+	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s dbname=%s sslmode=disable",
+		host, port, user, dbname)
+
+	us, err := models.NewUserService(psqlInfo)
 	if err != nil {
 		panic(err)
 	}
-	defer db.Close()
-	db.LogMode(true)
+	us.DestructiveReset()
 
-	db.AutoMigrate(&User{})
-
-	name, email := getInfo()
-	u := &User{
-		Name:  name,
-		Email: email,
+	// Create a user
+	user := models.User{
+		Name:  "sunil",
+		Email: "s@y.com",
 	}
-	if err = db.Create(u).Error; err != nil {
+
+	if err := us.Create(&user); err != nil {
 		panic(err)
 	}
-	fmt.Printf("%+v\n", u)
-}
 
-func getInfo() (name, email string) {
-	reader := bufio.NewReader(os.Stdin)
-	fmt.Println("What is your name?")
-	name, _ = reader.ReadString('\n')
-	name = strings.TrimSpace(name)
-	fmt.Println("What is your email?")
-	email, _ = reader.ReadString('\n')
-	email = strings.TrimSpace(email)
-	return name, email
+	foundUser, err := us.ByID(1)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println(foundUser)
+
 }
