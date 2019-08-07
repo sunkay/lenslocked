@@ -16,6 +16,8 @@ var (
 	// ErrInvalidID is returned when an invalid ID is provided
 	// to a method like Delete.
 	ErrInvalidID = errors.New("models: ID provided was invalid")
+
+	userPwPepper = "lived in west ford"
 )
 
 type User struct {
@@ -47,7 +49,7 @@ func NewUserService(connectionInfo string) (*UserService, error) {
 func (us *UserService) Create(user *User) error {
 
 	hashedBytes, err := bcrypt.GenerateFromPassword(
-		[]byte(user.Password),
+		[]byte(user.Password+userPwPepper),
 		bcrypt.DefaultCost)
 	if err != nil {
 		return err
