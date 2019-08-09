@@ -17,6 +17,10 @@ var (
 	// to a method like Delete.
 	ErrInvalidID = errors.New("models: ID provided was invalid")
 
+	// ErrInvalidPassword is returned when passwordHash
+	// does not match the incoming password
+	ErrInvalidPassword = errors.New("models: incorrect password provided")
+
 	userPwPepper = "lived in west ford"
 )
 
@@ -114,6 +118,32 @@ func (us *UserService) Delete(id uint) error {
 	}
 	user := User{Model: gorm.Model{ID: id}}
 	return us.db.Delete(user).Error
+}
+
+// Authenticate a user by comparing the input email & password with
+// the stored users hashed password. Returns User and Error
+// If it is a match return foundUser, nil
+// If email not found rerturn nil, ErrNotFound
+// If password does not match return nil, ErrInvalidPassword
+// otherwise return nil, error
+func (us *UserService) Authenticate(email string, pwd string) (*User, error) {
+	foundUser, err := us.ByEmail(email)
+	if err != nil {
+		return nil, err
+	}
+
+	err = bcrypt.CompareHashAndPassword(
+		[]byte(foundUser.PasswordHash),
+		[]byte(pwd+userPwPepper))
+	switch err {
+	case nil:
+		return foundUser, nil
+	case bcrypt.ErrMismatchedHashAndPassword:
+		return nil, ErrInvalidPassword
+	default:
+		return nil, err
+	}
+
 }
 
 // AutoMigrate will attempt to automatically migrate the Users table
