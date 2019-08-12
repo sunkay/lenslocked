@@ -4,10 +4,14 @@ import (
 	"errors"
 
 	"golang.org/x/crypto/bcrypt"
+	"lenslocked.com/hash"
+	"lenslocked.com/rand"
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 )
+
+const hmacSecretKey = "my_secret-hmac-key"
 
 var (
 	// ErrNotFound is returned when a resource cannot be found in DB
@@ -30,10 +34,13 @@ type User struct {
 	Email        string `gorm:"not null;unique_index"`
 	Password     string `gorm:"-"`
 	PasswordHash string `gorm:"not null"`
+	Rememeber    string `gorm:"-"`
+	RememberHash string `gorm:"not null;unique_index"`
 }
 
 type UserService struct {
-	db *gorm.DB
+	db   *gorm.DB
+	hmac hash.HMAC
 }
 
 func NewUserService(connectionInfo string) (*UserService, error) {
@@ -42,8 +49,10 @@ func NewUserService(connectionInfo string) (*UserService, error) {
 		return nil, err
 	}
 	db.LogMode(true)
+	hmac := hash.NewHMAC(hmacSecretKey)
 	return &UserService{
-		db: db,
+		db:   db,
+		hmac: hmac,
 	}, nil
 }
 
@@ -60,6 +69,14 @@ func (us *UserService) Create(user *User) error {
 	}
 	user.PasswordHash = string(hashedBytes)
 	user.Password = ""
+
+	if user.Rememeber == "" {
+		token, err := rand.RememberToken()
+		if err != nil {
+			return err
+		}
+		user.Rememeber = token
+	}
 
 	return us.db.Create(user).Error
 }
