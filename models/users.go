@@ -34,7 +34,7 @@ type User struct {
 	Email        string `gorm:"not null;unique_index"`
 	Password     string `gorm:"-"`
 	PasswordHash string `gorm:"not null"`
-	Rememeber    string `gorm:"-"`
+	Remember     string `gorm:"-"`
 	RememberHash string `gorm:"not null;unique_index"`
 }
 
@@ -70,13 +70,14 @@ func (us *UserService) Create(user *User) error {
 	user.PasswordHash = string(hashedBytes)
 	user.Password = ""
 
-	if user.Rememeber == "" {
+	if user.Remember == "" {
 		token, err := rand.RememberToken()
 		if err != nil {
 			return err
 		}
-		user.Rememeber = token
+		user.Remember = token
 	}
+	user.RememberHash = us.hmac.Hash(user.Remember)
 
 	return us.db.Create(user).Error
 }
@@ -121,9 +122,28 @@ func (us *UserService) ByEmail(email string) (*User, error) {
 	return &user, nil
 }
 
+// ByRemember will lookup & return a user record that matches the provided Remember token.
+// If the user is found, we will return a nil error
+// If the user is not found, we will return ErrNotFound
+func (us *UserService) ByRemember(token string) (*User, error) {
+	var user User
+	rememberHash := us.hmac.Hash(token)
+	db := us.db.Where("remember_hash = ?", rememberHash)
+	err := first(db, &user)
+
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
 // Update will update the provided user with all of the data
 // in the provided user object.
 func (us *UserService) Update(user *User) error {
+	if user.Remember != "" {
+		user.RememberHash = us.hmac.Hash(user.Remember)
+	}
+
 	return us.db.Save(user).Error
 }
 

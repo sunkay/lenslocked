@@ -21,47 +21,63 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	defer us.Close()
 	us.DestructiveReset()
 
 	// Create a user
 	user := models.User{
-		Name:  "sunil",
-		Email: "s@y.com",
+		Name:     "sunil",
+		Email:    "s@y.com",
+		Password: "test",
 	}
 
 	if err := us.Create(&user); err != nil {
 		panic(err)
 	}
 
-	fmt.Println("----- Find User BY ID -----")
-	foundUser, err := us.ByID(1)
+	//verify if remember token is present
+	fmt.Printf("%+v\n", user)
+	if user.Remember == "" {
+		panic("Users remember token is missing...")
+	}
+
+	fmt.Println("----- Find User BY Remember Token -----")
+	foundUser, err := us.ByRemember(user.Remember)
 	if err != nil {
 		panic(err)
 	}
 	fmt.Println(foundUser)
 
-	fmt.Println("----- UPDATE NAME  -----")
-	user.Name = "CHANGED"
-	err = us.Update(&user)
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println("Updated USER NAME")
-	foundUser, err = us.ByEmail("s@y.com")
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println(foundUser)
+	/*
+		fmt.Println("----- Find User BY ID -----")
+		foundUser, err := us.ByID(1)
+		if err != nil {
+			panic(err)
+		}
+		fmt.Println(foundUser)
 
-	fmt.Println("----- DELETEING A USER BY ID -----")
-	err = us.Delete(1)
-	if err != nil {
-		panic(err)
-	}
-	foundUser, err = us.ByEmail("s@y.com")
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println(foundUser)
+		fmt.Println("----- UPDATE NAME  -----")
+		user.Name = "CHANGED"
+		err = us.Update(&user)
+		if err != nil {
+			panic(err)
+		}
+		fmt.Println("Updated USER NAME")
+		foundUser, err = us.ByEmail("s@y.com")
+		if err != nil {
+			panic(err)
+		}
+		fmt.Println(foundUser)
 
+		fmt.Println("----- DELETEING A USER BY ID -----")
+		err = us.Delete(1)
+		if err != nil {
+			panic(err)
+		}
+		foundUser, err = us.ByEmail("s@y.com")
+		if err != nil {
+			panic(err)
+		}
+		fmt.Println(foundUser)
+	*/
 }
