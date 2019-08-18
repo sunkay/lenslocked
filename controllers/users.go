@@ -110,3 +110,7 @@ func (u *Users) CookieTest(w http.ResponseWriter, r *http.Request) {
 	}
 	fmt.Fprintln(w, "Email is: ", cookie.Value)
 }
+
+func (u *Users) signIn(w http.ResponseWriter, u *models.User) error {
+
+}
