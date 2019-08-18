@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"lenslocked.com/models"
-
+	"lenslocked.com/rand"
 	"lenslocked.com/views"
 )
 
@@ -62,7 +62,12 @@ func (u *Users) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Fprintln(w, "Added User: ", user)
+	err := u.signIn(w, &user)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	http.Redirect(w, r, "/cookieTest", http.StatusFound)
 }
 
 type LoginForm struct {
@@ -92,14 +97,13 @@ func (u *Users) Login(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-	cookie := http.Cookie{
-		Name:  "email",
-		Value: user.Email,
+
+	err = u.signIn(w, user)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
-	http.SetCookie(w, &cookie)
-
-	fmt.Fprintln(w, "Successful Login", user)
-
+	http.Redirect(w, r, "/cookieTest", http.StatusFound)
 }
 
 func (u *Users) CookieTest(w http.ResponseWriter, r *http.Request) {
@@ -111,6 +115,25 @@ func (u *Users) CookieTest(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, "Email is: ", cookie.Value)
 }
 
-func (u *Users) signIn(w http.ResponseWriter, u *models.User) error {
+// signIn will create a remember token if it is not already present
+// if the rememberToken is present in the user model then it will use that to create a cookie
+func (u *Users) signIn(w http.ResponseWriter, user *models.User) error {
+	if user.Remember == "" {
+		token, err := rand.RememberToken()
+		if err != nil {
+			return err
+		}
+		user.Remember = token
+		err = u.us.Update(user)
+		if err != nil {
+			return err
+		}
+	}
+	cookie := http.Cookie{
+		Name:  "remember_token",
+		Value: user.Remember,
+	}
+	http.SetCookie(w, &cookie)
 
+	return nil
 }
