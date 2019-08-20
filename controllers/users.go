@@ -107,12 +107,18 @@ func (u *Users) Login(w http.ResponseWriter, r *http.Request) {
 }
 
 func (u *Users) CookieTest(w http.ResponseWriter, r *http.Request) {
-	cookie, err := r.Cookie("email")
+	cookie, err := r.Cookie("remember_token")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	fmt.Fprintln(w, "Email is: ", cookie.Value)
+	user, err := u.us.ByRemember(cookie.Value)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	fmt.Fprintln(w, "User is: ", user)
 }
 
 // signIn will create a remember token if it is not already present
@@ -130,8 +136,9 @@ func (u *Users) signIn(w http.ResponseWriter, user *models.User) error {
 		}
 	}
 	cookie := http.Cookie{
-		Name:  "remember_token",
-		Value: user.Remember,
+		Name:     "remember_token",
+		Value:    user.Remember,
+		HttpOnly: true,
 	}
 	http.SetCookie(w, &cookie)
 
