@@ -69,39 +69,24 @@ type UserDB interface {
 	AutoMigrate() error
 }
 
-type userGorm struct {
-	db   *gorm.DB
-	hmac hash.HMAC
-}
-
-type UserService struct {
+// UserService provides methods that interact with user model
+type UserService interface {
+	// Authenticate a user by comparing the input email & password with
+	// the stored users hashed password. Returns User and Error
+	// If it is a match return foundUser, nil
+	// If email not found rerturn nil, ErrNotFound
+	// If password does not match return nil, ErrInvalidPassword
+	// otherwise return nil, error
+	Authenticate(email string, pwd string) (*User, error)
 	UserDB
 }
 
-func newUserGorm(connectionInfo string) (*userGorm, error) {
-	db, err := gorm.Open("postgres", connectionInfo)
-	if err != nil {
-		return nil, err
-	}
-	db.LogMode(true)
-	hmac := hash.NewHMAC(hmacSecretKey)
-	return &userGorm{
-		db:   db,
-		hmac: hmac,
-	}, nil
+type userService struct {
+	UserDB
 }
 
-func NewUserService(connectionInfo string) (*UserService, error) {
-	ug, err := newUserGorm(connectionInfo)
-	if err != nil {
-		return nil, err
-	}
-
-	return &UserService{
-		UserDB: userValidator{
-			UserDB: ug,
-		},
-	}, nil
+type userGorm struct {
+	db *gorm.DB
 }
 
 // userValidator is our validation layer that validates
@@ -109,13 +94,37 @@ func NewUserService(connectionInfo string) (*UserService, error) {
 // UserDB in our interface chain.
 type userValidator struct {
 	UserDB
+	hmac hash.HMAC
 }
 
-// Creates a user in the database with the associated hashed password
-// This function makes sure we do not store raw password and only stores hashed
-// passwords with the user record
-func (ug *userGorm) Create(user *User) error {
+func newUserGorm(connectionInfo string) (*userGorm, error) {
+	db, err := gorm.Open("postgres", connectionInfo)
+	if err != nil {
+		return nil, err
+	}
 
+	db.LogMode(true)
+	return &userGorm{
+		db: db,
+	}, nil
+}
+
+func NewUserService(connectionInfo string) (UserService, error) {
+	ug, err := newUserGorm(connectionInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	hmac := hash.NewHMAC(hmacSecretKey)
+	return &userService{
+		UserDB: &userValidator{
+			UserDB: ug,
+			hmac:   hmac,
+		},
+	}, nil
+}
+
+func (uv *userValidator) Create(user *User) error {
 	hashedBytes, err := bcrypt.GenerateFromPassword(
 		[]byte(user.Password+userPwPepper),
 		bcrypt.DefaultCost)
@@ -132,7 +141,14 @@ func (ug *userGorm) Create(user *User) error {
 		}
 		user.Remember = token
 	}
-	user.RememberHash = ug.hmac.Hash(user.Remember)
+	user.RememberHash = uv.hmac.Hash(user.Remember)
+	return uv.UserDB.Create(user)
+}
+
+// Creates a user in the database with the associated hashed password
+// This function makes sure we do not store raw password and only stores hashed
+// passwords with the user record
+func (ug *userGorm) Create(user *User) error {
 
 	return ug.db.Create(user).Error
 }
@@ -177,12 +193,16 @@ func (ug *userGorm) ByEmail(email string) (*User, error) {
 	return &user, nil
 }
 
+func (uv *userValidator) ByRemember(token string) (*User, error) {
+	rememberHash := uv.hmac.Hash(token)
+	return uv.UserDB.ByRemember(rememberHash)
+}
+
 // ByRemember will lookup & return a user record that matches the provided Remember token.
 // If the user is found, we will return a nil error
 // If the user is not found, we will return ErrNotFound
-func (ug *userGorm) ByRemember(token string) (*User, error) {
+func (ug *userGorm) ByRemember(rememberHash string) (*User, error) {
 	var user User
-	rememberHash := ug.hmac.Hash(token)
 	db := ug.db.Where("remember_hash = ?", rememberHash)
 	err := first(db, &user)
 
@@ -192,22 +212,30 @@ func (ug *userGorm) ByRemember(token string) (*User, error) {
 	return &user, nil
 }
 
+func (uv *userValidator) Update(user *User) error {
+	if user.Remember != "" {
+		user.RememberHash = uv.hmac.Hash(user.Remember)
+	}
+	return uv.UserDB.Update(user)
+}
+
 // Update will update the provided user with all of the data
 // in the provided user object.
 func (ug *userGorm) Update(user *User) error {
-	if user.Remember != "" {
-		user.RememberHash = ug.hmac.Hash(user.Remember)
-	}
 
 	return ug.db.Save(user).Error
+}
+
+func (uv *userValidator) Delete(id uint) error {
+	if id == 0 {
+		return ErrInvalidID
+	}
+	return uv.UserDB.Delete(id)
 }
 
 // Delete will delete the user with provided ID
 // Delete will return an ErrInvalidID if ID provided is 0
 func (ug *userGorm) Delete(id uint) error {
-	if id == 0 {
-		return ErrInvalidID
-	}
 	user := User{Model: gorm.Model{ID: id}}
 	return ug.db.Delete(user).Error
 }
@@ -218,7 +246,7 @@ func (ug *userGorm) Delete(id uint) error {
 // If email not found rerturn nil, ErrNotFound
 // If password does not match return nil, ErrInvalidPassword
 // otherwise return nil, error
-func (us *UserService) Authenticate(email string, pwd string) (*User, error) {
+func (us *userService) Authenticate(email string, pwd string) (*User, error) {
 	foundUser, err := us.ByEmail(email)
 	if err != nil {
 		return nil, err
