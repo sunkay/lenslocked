@@ -26,9 +26,9 @@ func main() {
 
 	// Create a user
 	user := models.User{
-		Name:     "sunil",
-		Email:    "s@y.com",
-		Password: "test",
+		Name:     "test_user",
+		Email:    "test@test.com",
+		Password: "test123",
 	}
 
 	if err := us.Create(&user); err != nil {

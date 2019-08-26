@@ -1,27 +1,29 @@
 {{define "navbar"}}
-<nav class="navbar navbar-default">
-  <div class="container-fluid">
-    <div class="navbar-header">
-      <button type="button" class="navbar-toggle collapsed" 
-        data-toggle="collapse" data-target="#navbar" 
-        aria-expanded="false" aria-controls="navbar">
-        <span class="sr-only">Toggle navigation</span>
-        <span class="icon-bar"></span>
-        <span class="icon-bar"></span>
-        <span class="icon-bar"></span>
-      </button>
-      <a class="navbar-brand" href="/">LensLocked.com</a>
-    </div>
-    <div id="navbar" class="navbar-collapse collapse">
-      <ul class="nav navbar-nav">
-        <li><a href="/">Home</a></li>
-        <li><a href="/contact">Contact</a></li>
+<header>
+  <!-- Fixed navbar -->
+  <nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark">
+    <a class="navbar-brand" href="/">LensLocked.com</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" 
+            data-target="#navbarCollapse" aria-controls="navbarCollapse" 
+            aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarCollapse">
+      <ul class="navbar-nav mr-auto">
+        <li class="nav-item active">
+          <a class="nav-link" href="/">Home 
+                  <span class="sr-only">(current)</span></a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/contact">Contact</a>
+        </li>
       </ul>
-      <ul class="nav navbar-nav navbar-right">
-        <li><a href="/login">Login</a></li>
-        <li><a href="/signup">Sign Up</a></li>
+      <ul class="navbar-nav" >
+        <li class="nav-item"><a class="nav-link" href="/login">Login</a></li>
+        <li class="nav-item"><a class="nav-link" href="/signup">Sign Up</a></li>
       </ul>
     </div>
-  </div>
-</nav>
+  </nav>
+</header>
+
 {{end}}

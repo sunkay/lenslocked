@@ -17,3 +17,7 @@ cmd> psql -U postgres
 psql> create database lenslocked_dev; // first time only
 psql> \c lenslocked_dev
 psql> select * from users;
+
+#------ dev -----
+go get -u github.com/pilu/fresh
+go get golang.org/x/tools/cmd/gorename

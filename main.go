@@ -44,5 +44,10 @@ func main() {
 
 	r.HandleFunc("/cookieTest", usersC.CookieTest).Methods("GET")
 
-	http.ListenAndServe(":3000", r)
+	// Assets
+	assetHandler := http.FileServer(http.Dir("./assets/"))
+	assetHandler = http.StripPrefix("/assets/", assetHandler)
+	r.PathPrefix("/assets/").Handler(assetHandler)
+
+	http.ListenAndServe("localhost:3000", r)
 }
