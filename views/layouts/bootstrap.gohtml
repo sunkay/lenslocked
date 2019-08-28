@@ -14,6 +14,7 @@
         {{template "navbar"}}
         <main role="main" class="flex-shrink-0">
             <div class="container">
+                {{template "alert" .}}
             <!-- Our content will go here... somehow -->
                 {{template "yield" .}}
             </div>
