@@ -29,17 +29,17 @@ type Users struct {
 // GET /signup
 
 func (u *Users) New(w http.ResponseWriter, r *http.Request) {
-	// Temporarily alert
-	type Alert struct {
-		Level   string
-		Message string
-	}
-	alert := Alert{
-		Level:   "success",
+
+	alert := views.Alert{
+		Level:   views.AlertLvlSuccess,
 		Message: "Successfully rendered a dynamic alert!",
 	}
+	data := views.Data{
+		Alert: &alert,
+		Yield: "this is any yield data since it is an interface",
+	}
 
-	if err := u.NewView.Render(w, alert); err != nil {
+	if err := u.NewView.Render(w, data); err != nil {
 		panic(err)
 	}
 }
