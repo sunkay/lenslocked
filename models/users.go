@@ -1,7 +1,6 @@
 package models
 
 import (
-	"errors"
 	"regexp"
 	"strings"
 
@@ -14,44 +13,48 @@ import (
 )
 
 const hmacSecretKey = "my_secret-hmac-key"
+const userPwPepper = "lived in west ford"
 
-var (
-	// ErrNotFound is returned when a resource cannot be found in DB
-	ErrNotFound = errors.New("models: resource not found")
+const (
+	// ErrNotFound is returned when a resource cannot be found
+	// in the database.
+	ErrNotFound modelError = "models: resource not found"
 
 	// ErrIDInvalid is returned when an invalid ID is provided
 	// to a method like Delete.
-	ErrIDInvalid = errors.New("models: ID provided was invalid")
+	ErrIDInvalid modelError = "models: ID provided was invalid"
 
-	// ErrPasswordInvalid is returned when passwordHash
-	// does not match the incoming password
-	ErrPasswordInvalid = errors.New("models: incorrect password provided")
+	// ErrPasswordIncorrect is returned when an invalid password
+	// is used when attempting to authenticate a user.
+	ErrPasswordIncorrect modelError = "models: incorrect password provided"
+
+	// ErrPasswordTooShort is returned when a user tries to set
+	// a password that is less than 8 characters long.
+	ErrPasswordTooShort modelError = "models: password must be at least 8 characters long"
+
+	// ErrPasswordRequired is returned when a create is attempted
+	// without a user password provided.
+	ErrPasswordRequired modelError = "models: password is required"
 
 	// ErrEmailRequired is returned when an email address is
 	// not provided when creating a user
-	ErrEmailRequired = errors.New("models: email address is required")
+	ErrEmailRequired modelError = "models: email address is required"
 
 	// ErrEmailInvalid is returned when an email address provided
 	// does not match any of our requirements
-	ErrEmailInvalid = errors.New("models: email address is not valid")
+	ErrEmailInvalid modelError = "models: email address is not valid"
 
 	// ErrEmailTaken is returned when an update or create is attempted
-	// with an email address that is already in use
-	ErrEmailTaken       = errors.New("models: email address is already taken")
-	ErrPasswordTooShort = errors.New("models: password length is too short")
-	ErrPasswordRequired = errors.New("models. password required")
+	// with an email address that is already in use.
+	ErrEmailTaken modelError = "models: email address is already taken"
 
 	// ErrRememberRequired is returned when a create or update
 	// is attempted without a user remember token hash
-	ErrRememberRequired = errors.New("models: remember token " +
-		"is required")
+	ErrRememberRequired modelError = "models: remember token is required"
 
 	// ErrRememberTooShort is returned when a remember token is
 	// not at least 32 bytes
-	ErrRememberTooShort = errors.New("models: remember token " +
-		"must be at least 32 bytes")
-
-	userPwPepper = "lived in west ford"
+	ErrRememberTooShort modelError = "models: remember token must be at least 32 bytes"
 )
 
 type User struct {
@@ -467,7 +470,7 @@ func (us *userService) Authenticate(email string, pwd string) (*User, error) {
 	case nil:
 		return foundUser, nil
 	case bcrypt.ErrMismatchedHashAndPassword:
-		return nil, ErrPasswordInvalid
+		return nil, ErrPasswordIncorrect
 	default:
 		return nil, err
 	}
@@ -504,4 +507,17 @@ func first(db *gorm.DB, dst interface{}) error {
 		return ErrNotFound
 	}
 	return err
+}
+
+type modelError string
+
+func (e modelError) Error() string {
+	return string(e)
+}
+
+func (e modelError) Public() string {
+	s := strings.Replace(string(e), "models: ", "", 1)
+	split := strings.Split(s, " ")
+	split[0] = strings.Title(split[0])
+	return strings.Join(split, " ")
 }
