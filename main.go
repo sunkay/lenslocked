@@ -22,14 +22,14 @@ func main() {
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s dbname=%s sslmode=disable",
 		host, port, user, dbname)
 
-	us, err := models.NewUserService(psqlInfo)
+	services, err := models.NewServices(psqlInfo)
 	if err != nil {
 		panic(err)
 	}
-	defer us.Close()
-	us.AutoMigrate()
+	defer services.User.Close()
+	services.User.AutoMigrate()
 
-	usersC := controllers.NewUsers(us)
+	usersC := controllers.NewUsers(services.User)
 	staticC := controllers.NewStatic()
 
 	r := mux.NewRouter()

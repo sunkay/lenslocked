@@ -17,12 +17,12 @@ func main() {
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s dbname=%s sslmode=disable",
 		host, port, user, dbname)
 
-	us, err := models.NewUserService(psqlInfo)
+	us, err := models.NewServices(psqlInfo)
 	if err != nil {
 		panic(err)
 	}
-	defer us.Close()
-	us.DestructiveReset()
+	defer us.User.Close()
+	us.User.DestructiveReset()
 
 	// Create a user
 	user := models.User{
@@ -31,7 +31,7 @@ func main() {
 		Password: "test123",
 	}
 
-	if err := us.Create(&user); err != nil {
+	if err := us.User.Create(&user); err != nil {
 		panic(err)
 	}
 
@@ -42,7 +42,7 @@ func main() {
 	}
 
 	fmt.Println("----- Find User BY Remember Token -----")
-	foundUser, err := us.ByRemember(user.Remember)
+	foundUser, err := us.User.ByRemember(user.Remember)
 	if err != nil {
 		panic(err)
 	}
