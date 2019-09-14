@@ -7,6 +7,7 @@ import (
 type Services struct {
 	Gallery GalleryService
 	User    UserService
+	db      *gorm.DB
 }
 
 func NewServices(connectionInfo string) (*Services, error) {
@@ -19,6 +20,23 @@ func NewServices(connectionInfo string) (*Services, error) {
 	return &Services{
 		User:    NewUserService(db),
 		Gallery: &GalleryGorm{},
+		db:      db,
 	}, nil
+}
 
+func (s *Services) Close() error {
+	return s.db.Close()
+}
+
+func (s *Services) AutoMigrate() error {
+	return s.db.AutoMigrate(&User{}, &Gallery{}).Error
+}
+
+// DestructiveReset will drop all our tables and resets the database
+// This should not be used normally, but will help when writing tests
+func (s *Services) DestructiveReset() error {
+	if err := s.db.DropTableIfExists(&User{}, &Gallery{}).Error; err != nil {
+		return err
+	}
+	return s.AutoMigrate()
 }

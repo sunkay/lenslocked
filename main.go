@@ -26,8 +26,8 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	defer services.User.Close()
-	services.User.AutoMigrate()
+	defer services.Close()
+	services.AutoMigrate()
 
 	usersC := controllers.NewUsers(services.User)
 	staticC := controllers.NewStatic()
@@ -49,5 +49,7 @@ func main() {
 	assetHandler = http.StripPrefix("/assets/", assetHandler)
 	r.PathPrefix("/assets/").Handler(assetHandler)
 
+	fmt.Println("bef listening on localhost:3000 ")
 	http.ListenAndServe("localhost:3000", r)
+
 }
