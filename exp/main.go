@@ -22,7 +22,6 @@ func main() {
 		panic(err)
 	}
 	defer services.Close()
-	us.User.DestructiveReset()
 
 	// Create a user
 	user := models.User{
@@ -31,7 +30,7 @@ func main() {
 		Password: "test123",
 	}
 
-	if err := us.User.Create(&user); err != nil {
+	if err := services.User.Create(&user); err != nil {
 		panic(err)
 	}
 
@@ -42,7 +41,7 @@ func main() {
 	}
 
 	fmt.Println("----- Find User BY Remember Token -----")
-	foundUser, err := us.User.ByRemember(user.Remember)
+	foundUser, err := services.User.ByRemember(user.Remember)
 	if err != nil {
 		panic(err)
 	}

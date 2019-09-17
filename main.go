@@ -29,8 +29,9 @@ func main() {
 	defer services.Close()
 	services.AutoMigrate()
 
-	usersC := controllers.NewUsers(services.User)
 	staticC := controllers.NewStatic()
+	usersC := controllers.NewUsers(services.User)
+	galleriesC := controllers.NewGalleries(services.Gallery)
 
 	r := mux.NewRouter()
 	r.Handle("/", staticC.Home).Methods("GET")
@@ -41,6 +42,8 @@ func main() {
 	r.HandleFunc("/signup", usersC.Create).Methods("POST")
 	r.Handle("/login", usersC.LoginView).Methods("GET")
 	r.HandleFunc("/login", usersC.Login).Methods("POST")
+	r.Handle("/galleries/new", galleriesC.New).Methods("GET")
+	r.HandleFunc("/galleries", galleriesC.Create).Methods("POST")
 
 	r.HandleFunc("/cookieTest", usersC.CookieTest).Methods("GET")
 
@@ -49,7 +52,7 @@ func main() {
 	assetHandler = http.StripPrefix("/assets/", assetHandler)
 	r.PathPrefix("/assets/").Handler(assetHandler)
 
-	fmt.Println("bef listening on localhost:3000 ")
+	fmt.Println("bff listening on localhost:3000 ")
 	http.ListenAndServe("localhost:3000", r)
 
 }

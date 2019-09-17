@@ -1,0 +1,21 @@
+{{define "yield"}}
+<div class="card text-center w-75 mx-auto">
+  <div class="card-header">
+    Create a gallery
+  </div>
+  <div class="card-body ">
+    {{template "gallery-form"}}
+  </div>
+{{end}}
+
+{{define "gallery-form"}}
+    <form class="form-horizontal" action="/galleries" method="POST">
+    <div class="form-group">
+        <input type="text" name="title" 
+                class="form-control" id="title" placeholder="What is the title?">
+    </div>
+    <div class="form-group">
+        <button type="submit" class="btn btn-primary">Create</button>
+    </div>
+    </form>
+{{end}}
