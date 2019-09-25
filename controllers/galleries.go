@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -12,21 +11,27 @@ import (
 	"lenslocked.com/views"
 )
 
+const (
+	ShowGallery = "show_gallery"
+)
+
 type Galleries struct {
 	New      *views.View
 	ShowView *views.View
 	gs       models.GalleryService
+	r        *mux.Router
 }
 
 type GalleryForm struct {
 	Title string `schema:"title"`
 }
 
-func NewGalleries(gs models.GalleryService) *Galleries {
+func NewGalleries(gs models.GalleryService, r *mux.Router) *Galleries {
 	return &Galleries{
 		New:      views.NewView("bootstrap", "galleries/new"),
 		ShowView: views.NewView("bootstrap", "galleries/show"),
 		gs:       gs,
+		r:        r,
 	}
 }
 
@@ -49,10 +54,19 @@ func (g *Galleries) Create(w http.ResponseWriter, r *http.Request) {
 		g.New.Render(w, vd)
 		return
 	}
-	fmt.Fprintln(w, gallery)
+
+	url, err := g.r.Get(ShowGallery).URL("id",
+		strconv.Itoa(int(gallery.ID)))
+	if err != nil {
+		http.Redirect(w, r, "/", http.StatusFound)
+	}
+	http.Redirect(w, r, url.Path, http.StatusFound)
+
 }
 
 func (g *Galleries) Show(w http.ResponseWriter, r *http.Request) {
+	var vd views.Data
+
 	// Get the request variables
 	vars := mux.Vars(r)
 
@@ -66,15 +80,20 @@ func (g *Galleries) Show(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: Remove
-	_ = id
-
 	// look up gallery based on id
-	gallery := models.Gallery{
-		Title: "A temp fake galery with id" + idStr,
+	gallery, err := g.gs.ByID(uint(id))
+	if err != nil {
+		switch err {
+		case models.ErrNotFound:
+			vd.AlertError("Gallery not found!")
+			g.ShowView.Render(w, vd)
+		default:
+			http.Error(w, "Whoops! Something went wrong",
+				http.StatusInternalServerError)
+		}
+		return
 	}
 
-	var vd views.Data
 	vd.Yield = gallery
 	g.ShowView.Render(w, vd)
 }
