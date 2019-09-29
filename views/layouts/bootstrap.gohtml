@@ -17,7 +17,9 @@
                 {{if .Alert}}
                     {{template "alert" .Alert}}
                 {{end}}
-            <!-- Our content will go here... somehow -->
+            </div>
+            <div class="container">
+                <!-- Our content will go here... somehow -->
                 {{template "yield" .Yield}}
             </div>
         </main>

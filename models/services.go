@@ -1,6 +1,8 @@
 package models
 
 import (
+	"fmt"
+
 	"github.com/jinzhu/gorm"
 )
 
@@ -13,7 +15,8 @@ type Services struct {
 func NewServices(connectionInfo string) (*Services, error) {
 	db, err := gorm.Open("postgres", connectionInfo)
 	if err != nil {
-		return nil, err
+		return nil,
+			fmt.Errorf("Unable to open postgres conn.. actual error: %s", err.Error())
 	}
 	db.LogMode(true)
 
